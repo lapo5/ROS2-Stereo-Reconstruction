@@ -1,0 +1,24 @@
+stereo_recon:
+  ros__parameters:
+
+    hz: 1.0
+
+    publishers:
+      marker_image: /target_tracking/marker_image
+      marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_
+      marker_presence_prefix: /target_tracking/camera_to_marker_presence/marker_
+
+    subscribers:
+      raw_frame: /camera/raw_frame
+
+    frames: 
+      camera_link: camera_link
+      marker_link_prefix: marker_link_
+
+    aruco:
+      dict: 5X5_100
+
+    camera_optic_length: auto
+      
+    grid:
+      detect_grid: False

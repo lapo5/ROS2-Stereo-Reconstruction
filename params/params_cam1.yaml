@@ -1,0 +1,17 @@
+av_node:
+  ros__parameters:
+
+    camera_name: DEV_1AB22C00BBE6
+
+    publishers:
+      raw_frame: /camera_left/raw_frame
+
+    services:
+      stop_camera: /camera_left/get_cam_state
+
+    frames: 
+      camera_link: camera_left_link
+      
+    rotation_angle: 0.0
+    width: 1000
+    height: 1000
