@@ -115,7 +115,7 @@ class StereoReconstruction(Node):
         #      \ fov /
         #        \|/
         self.stereo_fov_rad = 90 * (math.pi/180)  # 90 degree desired fov
-        self.stereo_height_px = 300          # 300x300 pixel stereo output
+        self.stereo_height_px = 1000          # 300x300 pixel stereo output
         self.stereo_focal_px = self.stereo_height_px/2 / math.tan(self.stereo_fov_rad/2)
 
         # We set the left rotation to identity and the right rotation
