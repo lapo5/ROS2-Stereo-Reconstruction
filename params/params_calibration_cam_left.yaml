@@ -1,0 +1,16 @@
+calibration_node:
+  ros__parameters:
+
+    number_of_images_to_calibrate: 50
+    board_dim: [5, 7]
+    square_size: 22.0 # mm
+
+    subscribers:
+      camera: /camera/raw_frame
+
+    auto_capture:
+      mode: True            # Capture an image every
+      time_for_frame: 2.0   # sec
+    
+    #calibration_path: auto  # Specify absolute path instead
+    calibration_path: /home/marco/xarm_devel/src/ROS2-Stereo-3D-Reconstruction/calibration/

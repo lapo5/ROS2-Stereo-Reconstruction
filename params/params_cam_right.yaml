@@ -1,7 +1,7 @@
-av_node_2:
+av_node_right:
   ros__parameters:
 
-    camera_name: DEV_1AB22C00BBE5
+    camera_name: DEV_1AB22C00BBE6
 
     publishers:
       raw_frame: /camera_right/raw_frame
@@ -12,6 +12,8 @@ av_node_2:
     frames: 
       camera_link: camera_right_link
       
-    rotation_angle: 180.0
+    rotation_angle: 0.0
+    
+    squared_image: True
     width: 1000
     height: 1000

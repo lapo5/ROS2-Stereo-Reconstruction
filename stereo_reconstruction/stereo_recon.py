@@ -62,43 +62,37 @@ class StereoReconstruction(Node):
 
         self.K_left  = np.array(self.cam_left_params["mtx"], dtype=float).reshape(3, 3)
         self.D_left  = np.array(self.cam_left_params["dist"], dtype=float)
+        self.D_left = self.D_left[0:4]
         self.K_right = np.array(self.cam_right_params["mtx"], dtype=float).reshape(3, 3)
         self.D_right = np.array(self.cam_right_params["dist"], dtype=float)
+        self.D_right = self.D_right[0:4]
 
         (self.width, self.height) = (1000, 1000)
 
         self.declare_parameter("hz", "1.0")
         self.hz = float(self.get_parameter("hz").value)
 
-
         # Get the relative extrinsics between the left and right camera
         self.R = np.eye(3, dtype=np.float32)
         self.T = np.zeros([3, 1], dtype=np.float32)
-        # Baseline only on y axis: 6 cm
+        # Baseline only on x axis: 6 cm
         self.T[0] = 0.06
 
         self.min_disp = 0
         # must be divisible by 16
-        self.num_disp = 160
+        self.num_disp = 320
         self.max_disp = self.min_disp + self.num_disp
 
-        self.block_size = 5
-        
+        self.block_size = 7
         self.stereo_good = cv2.StereoSGBM_create(minDisparity = self.min_disp,
                                         numDisparities = self.num_disp,
                                         blockSize = self.block_size,
-                                        P1 = 8*3*self.block_size**2,
-                                        P2 = 32*3*self.block_size**2,
+                                        P1 = 8*self.block_size**2,
+                                        P2 = 32*self.block_size**2,
                                         disp12MaxDiff = -1,
                                         uniquenessRatio = 10,
                                         speckleWindowSize = 0,
                                         speckleRange = 1)
-        
-        self.use_stereo_good = True
-
-        self.stereo = cv2.StereoBM_create(numDisparities=self.num_disp,
-                                            blockSize=self.block_size)
-
 
         # We need to determine what focal length our undistorted images should have
         # in order to set up the camera matrices for initUndistortRectifyMap.  We
@@ -140,13 +134,12 @@ class StereoReconstruction(Node):
         self.P_right = self.P_left.copy()
         self.P_right[0][3] = self.T[0]*self.stereo_focal_px
 
-
         # Construct Q for use with cv2.reprojectImageTo3D. Subtract max_disp from x
         # since we will crop the disparity later
-        self.Q = np.array([[1, 0,       0, -(self.stereo_cx - self.max_disp)],
-                           [0, 1,       0, -self.stereo_cy],
-                           [0, 0,       0, self.stereo_focal_px],
-                           [0, 0, -1/self.T[0], 0]])
+        self.Q = np.array([[1, 0,       0,              -(self.stereo_cx - self.max_disp)],
+                           [0, 1,       0,              -self.stereo_cy],
+                           [0, 0,       0,              self.stereo_focal_px],
+                           [0, 0,       -1/self.T[0],   0]])
 
         # Create an undistortion map for the left and right camera which applies the
         # rectification and undoes the camera distortion. This only has to be done
@@ -158,8 +151,7 @@ class StereoReconstruction(Node):
         (self.rm1, self.rm2) = cv2.fisheye.initUndistortRectifyMap(self.K_right, self.D_right, self.R_right, 
                                                                     self.P_right, self.stereo_size, self.m1type)
         self.undistort_rectify = {"left"  : (self.lm1, self.lm2),
-                                    "right" : (self.rm1, self.rm2)}
-
+                                  "right" : (self.rm1, self.rm2)}
 
 
         self.timer = self.create_timer(1.0/self.hz, self.estimate_3d_reconstr) # 50 Hz
@@ -198,7 +190,7 @@ class StereoReconstruction(Node):
     def compute_disparity(self):
         # compute the disparity on the center of the frames and convert it to a pixel disparity (divide by DISP_SCALE=16)
         
-        self.disparity = self.stereo.compute(self.center_undistorted["left"], 
+        self.disparity = self.stereo_good.compute(self.center_undistorted["left"], 
                                 self.center_undistorted["right"]).astype(np.float32) / 16.0
 
         # re-crop just the valid part of the disparity
@@ -217,8 +209,8 @@ class StereoReconstruction(Node):
         self.disparity_map[self.ind, 1] = self.disp_color[self.ind, 1]
         self.disparity_map[self.ind, 2] = self.disp_color[self.ind, 2]
 
-        #self.disparity = cv2.normalize(src=self.disparity, dst=self.disparity, beta=0, alpha=255, norm_type=cv2.NORM_MINMAX)
-        #self.disparity = np.uint8(self.disparity)
+        self.disparity = cv2.normalize(src=self.disparity, dst=self.disparity, beta=0, alpha=255, norm_type=cv2.NORM_MINMAX)
+        self.disparity = np.uint8(self.disparity)
 
         disp_msg =  self.bridge.cv2_to_imgmsg(self.disparity_map)
         disp_msg.header = Header()
