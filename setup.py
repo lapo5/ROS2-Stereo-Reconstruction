@@ -27,7 +27,8 @@ setup(
     license='BSD',
     entry_points={
         'console_scripts': [
-        'stereo_recon = stereo_reconstruction.stereo_recon:main',
+        'stereo_calibration = stereo_reconstruction.stereo_calibration:main',
+        'stereo_reconstruction = stereo_reconstruction.stereo_reconstruction:main',
         ],
     },
 )

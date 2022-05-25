@@ -1,24 +1,20 @@
-stereo_recon:
+stereo_reconstruction:
   ros__parameters:
 
     hz: 1.0
 
     publishers:
-      marker_image: /target_tracking/marker_image
-      marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_
-      marker_presence_prefix: /target_tracking/camera_to_marker_presence/marker_
+      disparity_map: /disparity_map
+      pointcloud: /pointcloud
 
     subscribers:
-      raw_frame: /camera/raw_frame
+      raw_frame_left: /camera_left/raw_frame
+      raw_frame_right: /camera_right/raw_frame
 
-    frames: 
-      camera_link: camera_link
-      marker_link_prefix: marker_link_
+    enable_compute_pointcloud: True
 
-    aruco:
-      dict: 5X5_100
+    image_width: 1000
+    image_height: 1000
 
-    camera_optic_length: auto
-      
-    grid:
-      detect_grid: False
+    frames:
+      stereo_link: camera_left_link

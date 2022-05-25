@@ -10,15 +10,18 @@ import launch.actions
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 
+from launch.actions.execute_process import ExecuteProcess
+
 def generate_launch_description():
 
-    params = os.path.join(get_package_share_directory("stereo_reconstruction"), 'params', 'params.yaml')
+    params = os.path.join(get_package_share_directory("stereo_reconstruction"), 'params', 'params_stereo_calibration.yaml')
+
 
     return LaunchDescription([
         Node(
             package='stereo_reconstruction',
-            executable='stereo_reconstruction',
-            name='stereo_reconstruction',
+            executable='stereo_calibration',
+            name='stereo_calibration',
             parameters=[params],
         )
 ])

@@ -47,9 +47,6 @@ class StereoReconstruction(Node):
 
         self.publisher_disp_map = self.create_publisher(Image, self.disp_map_topic, 1)
 
-        self.declare_parameter("camera_module", "hal_allied_vision_camera")
-        self.camera_module = self.get_parameter("camera_module").value
-
         package_share_directory = get_package_share_directory("stereo_reconstruction")
         self.calibration_camera_left_path = package_share_directory + "/calibration/calib_params_cam_left.json"
         self.calibration_camera_right_path = package_share_directory + "/calibration/calib_params_cam_right.json"
@@ -76,7 +73,7 @@ class StereoReconstruction(Node):
         self.R = np.eye(3, dtype=np.float32)
         self.T = np.zeros([3, 1], dtype=np.float32)
         # Baseline only on x axis: 6 cm
-        self.T[0] = 0.06
+        self.T[0] = -0.06
 
         self.min_disp = 0
         # must be divisible by 16
@@ -108,8 +105,8 @@ class StereoReconstruction(Node):
         #     \   |   /
         #      \ fov /
         #        \|/
-        self.stereo_fov_rad = 90 * (math.pi/180)  # 90 degree desired fov
-        self.stereo_height_px = 1000          # 300x300 pixel stereo output
+        self.stereo_fov_rad = 40 * (math.pi/180)  # 90 degree desired fov
+        self.stereo_height_px = 300          # 300x300 pixel stereo output
         self.stereo_focal_px = self.stereo_height_px/2 / math.tan(self.stereo_fov_rad/2)
 
         # We set the left rotation to identity and the right rotation
@@ -145,10 +142,10 @@ class StereoReconstruction(Node):
         # rectification and undoes the camera distortion. This only has to be done
         # once
         self.m1type = cv2.CV_32FC1
-        (self.lm1, self.lm2) = cv2.fisheye.initUndistortRectifyMap(self.K_left, self.D_left, self.R_left, 
+        (self.lm1, self.lm2) = cv2.initUndistortRectifyMap(self.K_left, self.D_left, self.R_left, 
                                                                     self.P_left, self.stereo_size, self.m1type)
 
-        (self.rm1, self.rm2) = cv2.fisheye.initUndistortRectifyMap(self.K_right, self.D_right, self.R_right, 
+        (self.rm1, self.rm2) = cv2.initUndistortRectifyMap(self.K_right, self.D_right, self.R_right, 
                                                                     self.P_right, self.stereo_size, self.m1type)
         self.undistort_rectify = {"left"  : (self.lm1, self.lm2),
                                   "right" : (self.rm1, self.rm2)}
