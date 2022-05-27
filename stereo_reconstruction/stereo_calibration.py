@@ -17,7 +17,7 @@ from ament_index_python.packages import get_package_share_directory
 
 CALIB_FILE = "stereo_calib_params.json"
 
-CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
 
 class CalibrationNode(Node):
     def __init__(self):
@@ -33,7 +33,6 @@ class CalibrationNode(Node):
 
         self.declare_parameter("board_dim", [6, 8])
         self.board_dim = self.get_parameter("board_dim").value
-
 
         self.declare_parameter("width_image", 1000)
         self.width_image = self.get_parameter("width_image").value
@@ -53,11 +52,20 @@ class CalibrationNode(Node):
         self.declare_parameter("auto_capture.mode", "True")
         self.auto_capture = self.get_parameter("auto_capture.mode").value
 
-        self.declare_parameter("auto_capture.time_for_frame", "True")
+        self.declare_parameter("single_cameras_calibrated", False)
+        self.single_cameras_calibrated = self.get_parameter("single_cameras_calibrated").value
+
+        self.declare_parameter("auto_capture.time_for_frame", True)
         self.time_for_frame = self.get_parameter("auto_capture.time_for_frame").value
 
         self.declare_parameter("calibration_path", "auto")
         self.calibration_path = self.get_parameter("calibration_path").value
+
+        self.CRITERIA_CALIB_STEREO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
+
+        self.stereocalibration_flags = cv2.CALIB_FIX_INTRINSIC
+
+        self.alpha_stereo_rectify = 0.0
 
         self.show_feedback = False
 
@@ -88,17 +96,13 @@ class CalibrationNode(Node):
 
 
     def calib_process(self):
-        if os.path.exists(self.calib_path+CALIB_FILE):
-            self.get_logger().info(CALIB_FILE + " already exists. Overwrite")
-            os.remove(self.calib_path+CALIB_FILE)
 
         self.get_logger().info("Init Calibration Node...")
-        sleep(5)
         while len(self.current_frame_left) == 0 or len(self.current_frame_right) == 0 :
             self.get_logger().warn("Waiting for the first frame acquisition...")
             sleep(1)
 
-        self.calibrate_cam()
+        self.calibrate_stereo()
 
 
     def callback_frame_left(self, msg):
@@ -114,11 +118,11 @@ class CalibrationNode(Node):
             self.get_logger().info("\n======== KEYBOARD COMMANDS ========\n\nq - quit pictures acquisition\nc - capture actual frame\n\n")
         else:
             self.get_logger().info("\nAuto-Capture - Taking 1 Frame every {0} secs \n\n".format(self.time_for_frame))
-            self.timer = self.create_timer(self.time_for_frame, self.update_frames) # 50 Hz
+            self.timer = self.create_timer(self.time_for_frame, self.update_frames) 
 
         while True:
             horizontal_concat = np.concatenate((self.current_frame_left, self.current_frame_right), axis=1)
-            cv2.imshow("LiveCamera", horizontal_concat)
+            cv2.imshow("LiveCamera -- LEFT & RIGHT", horizontal_concat)
             key = cv2.waitKey(1)
 
             if key == ord("q"):
@@ -148,7 +152,7 @@ class CalibrationNode(Node):
                 return True
 
 
-    def calibrate_cam(self):
+    def calibrate_stereo(self):
 
         is_done = self.take_calib_pics()
 
@@ -188,8 +192,8 @@ class CalibrationNode(Node):
             c_ret2, corners2 = cv2.findChessboardCorners(gray_right, (self.board_dim[1], self.board_dim[0]), None)
         
             if c_ret1 == True and c_ret2 == True:
-                corners1 = cv2.cornerSubPix(gray_left, corners1, (11, 11), (-1, -1), CRITERIA)
-                corners2 = cv2.cornerSubPix(gray_right, corners2, (11, 11), (-1, -1), CRITERIA)
+                corners1 = cv2.cornerSubPix(gray_left, corners1, (11, 11), (-1, -1), self.CRITERIA_CALIB_STEREO)
+                corners2 = cv2.cornerSubPix(gray_right, corners2, (11, 11), (-1, -1), self.CRITERIA_CALIB_STEREO)
         
                 if self.show_feedback:
                     cv2.drawChessboardCorners(frame_left, (self.board_dim[1], self.board_dim[0]), corners1, c_ret1)
@@ -208,45 +212,44 @@ class CalibrationNode(Node):
         self.get_logger().info("Obtaining Calibration Parameters")
 
         if self.count_images > self.min_valid_images:
-            package_share_directory = get_package_share_directory("stereo_reconstruction")
-            self.calibration_camera_left_path = package_share_directory + "/calibration/calib_params_cam_left.json"
-            self.calibration_camera_right_path = package_share_directory + "/calibration/calib_params_cam_right.json"
+            if self.single_cameras_calibrated:
+                self.get_logger().info("Using Pre-Calibrated Single Cameras Params")
+                package_share_directory = get_package_share_directory("stereo_reconstruction")
+                self.calibration_camera_left_path = package_share_directory + "/calibration/calib_params_cam_left.json"
+                self.calibration_camera_right_path = package_share_directory + "/calibration/calib_params_cam_right.json"
 
-            with open(self.calibration_camera_left_path, "r") as readfile:
-                self.cam_left_params = json.load(readfile)
+                with open(self.calibration_camera_left_path, "r") as readfile:
+                    self.cam_left_params = json.load(readfile)
 
-            with open(self.calibration_camera_right_path, "r") as readfile:
-                self.cam_right_params = json.load(readfile)
+                with open(self.calibration_camera_right_path, "r") as readfile:
+                    self.cam_right_params = json.load(readfile)
 
+            else:
+                self.get_logger().info("Re-calibrate Single Cameras Params")
+                self.cam_left_params = self.calibrate_cam(objpoints, imgpoints_left, gray_left.shape[::-1], "calib_params_cam_left.json", "Left")
+                self.cam_right_params = self.calibrate_cam(objpoints, imgpoints_right, gray_left.shape[::-1], "calib_params_cam_right.json", "Right")
+
+            
             self.K_left  = np.array(self.cam_left_params["mtx"], dtype=float).reshape(3, 3)
             self.D_left  = np.array(self.cam_left_params["dist"], dtype=float)
 
             self.K_right = np.array(self.cam_right_params["mtx"], dtype=float).reshape(3, 3)
             self.D_right = np.array(self.cam_right_params["dist"], dtype=float)
-
-            stereocalibration_flags = cv2.CALIB_FIX_INTRINSIC
-
+            
             ret, CM1, dist1, CM2, dist2, R, T, E, F = cv2.stereoCalibrate(
                 objpoints, imgpoints_left, imgpoints_right, 
                 self.K_left, self.D_left,
-                self.K_right,   self.D_right, (self.width_image, self.height_image), criteria = CRITERIA, 
-                flags = stereocalibration_flags)
+                self.K_right,   self.D_right, (self.width_image, self.height_image), criteria = self.CRITERIA_CALIB_STEREO, 
+                flags = self.stereocalibration_flags)
 
             R1, R2, P1, P2, Q, roi_left, roi_right = cv2.stereoRectify(
                 self.K_left, self.D_left, self.K_right, self.D_right, (self.width_image, self.height_image),
-                 R, T, flags=cv2.CALIB_ZERO_DISPARITY, alpha=0.9)
+                 R, T, flags=cv2.CALIB_ZERO_DISPARITY, alpha=self.alpha_stereo_rectify)
 
             self.get_logger().info("stereoCalibrate ret: {0}".format(ret))
 
-            self.get_logger().info("\nstereoCalibrate R:\n {0}".format(R))
-            self.get_logger().info("\nstereoCalibrate T:\n {0}".format(T))
-
-            self.get_logger().info("\nstereoRectify R1:\n {0}".format(R1))
-            self.get_logger().info("\nstereoRectify R2:\n {0}".format(R2))
-            self.get_logger().info("\nstereoRectify P1:\n {0}".format(P1))
-            self.get_logger().info("\nstereoRectify P2:\n {0}".format(P2))
-
-            self.get_logger().info("\nstereoRectify Q:\n {0}".format(Q))
+            self.get_logger().info("\nstereoRectify roi_left:\n {0}".format(roi_left))
+            self.get_logger().info("\nstereoRectify roi_right:\n {0}".format(roi_right))
 
             self.calib_params["R"] = [R.flatten()[i] for i in range(9)]
             self.calib_params["T"] = [T.flatten()[i] for i in range(3)]
@@ -258,6 +261,10 @@ class CalibrationNode(Node):
 
             self.calib_params["Q"] = [Q.flatten()[i] for i in range(16)]
 
+            if os.path.exists(self.calib_path+CALIB_FILE):
+                self.get_logger().info(CALIB_FILE + " already exists. Overwrite")
+                os.remove(self.calib_path+CALIB_FILE)
+
             with open(self.calib_path+CALIB_FILE, "w+") as outfile:
                 json.dump(self.calib_params, outfile)
 
@@ -265,6 +272,39 @@ class CalibrationNode(Node):
 
         else:
             self.get_logger().info("Calibration has failed. Not enough valid images (minimum is {0}).".format(self.min_valid_images))
+
+
+    def calibrate_cam(self, objpoints, imgpoints, img_shape, calib_file, camera_name):
+
+        calib_params = {"mtx": [], "dist": []}
+
+        # Obtain calibration parameters
+        ret, calib_params["mtx"], calib_params["dist"], rvecs, tvecs = cv2.calibrateCamera(objpoints, \
+            imgpoints, img_shape, None, None)
+
+        # Evaluate the mean error i.e. the calibration reprojection error
+        tot_error = 0
+        for i in range(len(objpoints)):
+            imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], calib_params["mtx"], calib_params["dist"])
+            error = cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+            tot_error += error
+
+        self.get_logger().info("mean error: " + str(tot_error/len(objpoints)) + "pixels" + "\n")
+
+        self.get_logger().info("Calibration of Camera {0} has been completed successfully.".format(camera_name))
+
+        calib_params["mtx"] = [calib_params["mtx"].flatten()[i] for i in range(9)]
+        calib_params["dist"] = [calib_params["dist"].flatten()[i] for i in range(5)]
+
+        if os.path.exists(self.calib_path+calib_file):
+            self.get_logger().info(calib_file + " already exists. Overwrite")
+            os.remove(self.calib_path+calib_file)
+
+        with open(self.calib_path+calib_file, "w+") as outfile:
+            json.dump(calib_params, outfile)
+
+        return calib_params
+
 
 
 

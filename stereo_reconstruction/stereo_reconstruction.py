@@ -57,6 +57,9 @@ class StereoReconstruction(Node):
 
         self.publisher_disp_map = self.create_publisher(Image, self.disp_map_topic, 1)
 
+        self.publisher_left_image_rect = self.create_publisher(Image, "/left_image_rect", 1)
+        self.publisher_right_image_rect = self.create_publisher(Image, "/right_image_rect", 1)
+
         self.publisher_pointcloud = self.create_publisher(PointCloud2, self.pointcloud_topic, 1)
 
         package_share_directory = get_package_share_directory("stereo_reconstruction")
@@ -90,23 +93,24 @@ class StereoReconstruction(Node):
 
         self.stereo_Q  = np.array(self.stereo_params["Q"], dtype=float).reshape(4, 4)
 
+        self.get_logger().info("self.stereo_Q: {0}".format(self.stereo_Q))
+
         self.declare_parameter("image_width", 1000)
         self.width = self.get_parameter("image_width").value
 
         self.declare_parameter("image_height", 1000)
         self.height = self.get_parameter("image_height").value
 
-        self.declare_parameter("hz", "1.0")
+        self.declare_parameter("hz", "0.5")
         self.hz = float(self.get_parameter("hz").value)
 
         # Get the relative extrinsics between the left and right camera
         self.R = self.stereo_R
         self.T = self.stereo_T
 
-        self.min_disp = 0
+        self.min_disp = 16
         # must be divisible by 16
-        self.num_disp = 320
-        self.max_disp = self.min_disp + self.num_disp
+        self.num_disp = 112 - self.min_disp
 
         self.block_size = 7
         self.stereo = cv2.StereoSGBM_create(minDisparity = self.min_disp,
@@ -168,16 +172,35 @@ class StereoReconstruction(Node):
         disp_msg.header = Header()
         disp_msg.header.stamp = self.get_clock().now().to_msg()
         disp_msg.header.frame_id = self.stereo_link
-
         self.publisher_disp_map.publish(disp_msg)
+
+        left_image_rect_msg =  self.bridge.cv2_to_imgmsg(left_rectified)
+        left_image_rect_msg.header = Header()
+        left_image_rect_msg.header.stamp = self.get_clock().now().to_msg()
+        left_image_rect_msg.header.frame_id = self.stereo_link
+        self.publisher_left_image_rect.publish(left_image_rect_msg)
+
+        right_image_rect_msg =  self.bridge.cv2_to_imgmsg(right_rectified)
+        right_image_rect_msg.header = Header()
+        right_image_rect_msg.header.stamp = self.get_clock().now().to_msg()
+        right_image_rect_msg.header.frame_id = self.stereo_link
+        self.publisher_right_image_rect.publish(right_image_rect_msg)
 
 
     def compute_pointcloud(self):
         
         self.get_logger().info("[Stereo 3D Reconstruction] Computing Pointcloud")
         points = cv2.reprojectImageTo3D(self.disparity, self.stereo_Q)
-        mask = self.disparity > self.disparity.min()
-        out_points = points[mask]
+        
+        # Remove INF values from point cloud
+        points[points == float('+inf')] = 0
+        points[points == float('-inf')] = 0
+        
+        # Get rid of points with value 0 (i.e no depth)
+        mask_map = self.disparity > self.min_disp
+
+        # Mask colors and points
+        out_points = points[mask_map]
 
         self.get_logger().info("PC: {0}".format(out_points))
         self.get_logger().info("PC shape: {0}".format(out_points.shape))
@@ -187,20 +210,37 @@ class StereoReconstruction(Node):
         pc_msg.header.stamp = self.get_clock().now().to_msg()
         pc_msg.header.frame_id = self.stereo_link
 
-        pc_msg.fields = []
+        x_field = PointField()
+        x_field.name = 'x'
+        x_field.offset = 0
+        x_field.datatype = PointField.FLOAT32
+        x_field.count = 1
+
+        y_field = PointField()
+        y_field.name = 'y'
+        y_field.offset = 4
+        y_field.datatype = PointField.FLOAT32
+        y_field.count = 1
+
+        z_field = PointField()
+        z_field.name = 'z'
+        z_field.offset = 8
+        z_field.datatype = PointField.FLOAT32
+        z_field.count = 1
+
+        pc_msg.fields = [x_field, y_field, z_field]
 
         pc_msg.height = out_points.shape[0]
         pc_msg.width = out_points.shape[1]
 
-        pc_msg.is_bigendian = False # assumption
+        pc_msg.is_bigendian = False
 
-        pc_msg.point_step = out_points.dtype.itemsize * 3
-        pc_msg.row_step = pc_msg.point_step * out_points.shape[0]
-        
+        pc_msg.point_step = 4
+        pc_msg.row_step = 12
+
         pc_msg.is_dense = True
 
-        dtype = np.float32
-        data = out_points.astype(dtype).tobytes() 
+        data = np.asarray(out_points, np.float32).tostring()
         pc_msg.data = data
 
         self.publisher_pointcloud.publish(pc_msg)
