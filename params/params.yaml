@@ -13,8 +13,8 @@ stereo_reconstruction:
 
     enable_compute_pointcloud: True
 
-    image_width: 1000
-    image_height: 1000
+    image_width: 808
+    image_height: 608
 
     frames:
       stereo_link: camera_left_link

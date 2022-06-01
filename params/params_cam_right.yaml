@@ -14,8 +14,8 @@ av_node_right:
       
     rotation_angle: 0.0
     
-    resize_image: False
-    new_width: 808
-    new_height: 608
+    resize_image: True
+    resized_width: 808
+    resized_height: 608
 
     auto_exposure: Once

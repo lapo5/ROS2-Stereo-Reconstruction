@@ -14,6 +14,8 @@ av_node_left:
       
     rotation_angle: 180.0
     
-    resize_image: False
+    crop_image: False
+    cropped_width: 600
+    cropped_height: 600
 
     auto_exposure: Once

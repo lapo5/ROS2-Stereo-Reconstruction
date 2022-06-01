@@ -13,5 +13,5 @@ av_node:
       camera_link: camera_link
       
     rotation_angle: 180.0
-    
-    resize_image: False
+
+    auto_exposure: Once
