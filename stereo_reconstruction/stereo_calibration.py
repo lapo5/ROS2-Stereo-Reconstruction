@@ -34,10 +34,10 @@ class CalibrationNode(Node):
         self.declare_parameter("board_dim", [6, 8])
         self.board_dim = self.get_parameter("board_dim").value
 
-        self.declare_parameter("width_image", 1000)
+        self.declare_parameter("width_image", 808)
         self.width_image = self.get_parameter("width_image").value
 
-        self.declare_parameter("height_image", 1000)
+        self.declare_parameter("height_image", 608)
         self.height_image = self.get_parameter("height_image").value
 
         self.declare_parameter("square_size", "28.0")
@@ -61,13 +61,13 @@ class CalibrationNode(Node):
         self.declare_parameter("calibration_path", "auto")
         self.calibration_path = self.get_parameter("calibration_path").value
 
-        self.CRITERIA_CALIB_STEREO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
+        self.criteria_calib_cameras = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
         self.stereocalibration_flags = cv2.CALIB_FIX_INTRINSIC
 
-        self.alpha_stereo_rectify = 0.0
+        self.alpha_stereo_rectify = -1
 
-        self.show_feedback = False
+        self.show_feedback = True
 
         package_share_directory = get_package_share_directory('stereo_reconstruction')
 
@@ -192,8 +192,8 @@ class CalibrationNode(Node):
             c_ret2, corners2 = cv2.findChessboardCorners(gray_right, (self.board_dim[1], self.board_dim[0]), None)
         
             if c_ret1 == True and c_ret2 == True:
-                corners1 = cv2.cornerSubPix(gray_left, corners1, (11, 11), (-1, -1), self.CRITERIA_CALIB_STEREO)
-                corners2 = cv2.cornerSubPix(gray_right, corners2, (11, 11), (-1, -1), self.CRITERIA_CALIB_STEREO)
+                corners1 = cv2.cornerSubPix(gray_left, corners1, (11, 11), (-1, -1), self.criteria_calib_cameras)
+                corners2 = cv2.cornerSubPix(gray_right, corners2, (11, 11), (-1, -1), self.criteria_calib_cameras)
         
                 if self.show_feedback:
                     cv2.drawChessboardCorners(frame_left, (self.board_dim[1], self.board_dim[0]), corners1, c_ret1)
@@ -201,6 +201,7 @@ class CalibrationNode(Node):
 
                     horizontal_concat = np.concatenate((frame_left, frame_right), axis=1)
                     cv2.imshow('Calibration', horizontal_concat)
+                    cv2.waitKey(0)
         
                 objpoints.append(objp)
                 imgpoints_left.append(corners1)
@@ -227,7 +228,7 @@ class CalibrationNode(Node):
             else:
                 self.get_logger().info("Re-calibrate Single Cameras Params")
                 self.cam_left_params = self.calibrate_cam(objpoints, imgpoints_left, gray_left.shape[::-1], "calib_params_cam_left.json", "Left")
-                self.cam_right_params = self.calibrate_cam(objpoints, imgpoints_right, gray_left.shape[::-1], "calib_params_cam_right.json", "Right")
+                self.cam_right_params = self.calibrate_cam(objpoints, imgpoints_right, gray_right.shape[::-1], "calib_params_cam_right.json", "Right")
 
             
             self.K_left  = np.array(self.cam_left_params["mtx"], dtype=float).reshape(3, 3)
@@ -239,7 +240,8 @@ class CalibrationNode(Node):
             ret, CM1, dist1, CM2, dist2, R, T, E, F = cv2.stereoCalibrate(
                 objpoints, imgpoints_left, imgpoints_right, 
                 self.K_left, self.D_left,
-                self.K_right,   self.D_right, (self.width_image, self.height_image), criteria = self.CRITERIA_CALIB_STEREO, 
+                self.K_right,   self.D_right, 
+                (self.width_image, self.height_image), criteria = self.criteria_calib_cameras, 
                 flags = self.stereocalibration_flags)
 
             R1, R2, P1, P2, Q, roi_left, roi_right = cv2.stereoRectify(
@@ -247,6 +249,11 @@ class CalibrationNode(Node):
                  R, T, flags=cv2.CALIB_ZERO_DISPARITY, alpha=self.alpha_stereo_rectify)
 
             self.get_logger().info("stereoCalibrate ret: {0}".format(ret))
+
+            self.get_logger().info("R1:\n {0}\n".format(R1))
+            self.get_logger().info("R2:\n {0}\n".format(R2))
+            self.get_logger().info("P1:\n {0}\n".format(P1))
+            self.get_logger().info("P2:\n {0}\n".format(P2))
 
             self.get_logger().info("\nstereoRectify roi_left:\n {0}".format(roi_left))
             self.get_logger().info("\nstereoRectify roi_right:\n {0}".format(roi_right))

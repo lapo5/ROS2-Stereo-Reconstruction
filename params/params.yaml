@@ -11,7 +11,7 @@ stereo_reconstruction:
       raw_frame_left: /camera_left/raw_frame
       raw_frame_right: /camera_right/raw_frame
 
-    enable_compute_pointcloud: True
+    enable_compute_pointcloud: False
 
     image_width: 808
     image_height: 608

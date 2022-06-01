@@ -95,10 +95,10 @@ class StereoReconstruction(Node):
 
         self.get_logger().info("self.stereo_Q: {0}".format(self.stereo_Q))
 
-        self.declare_parameter("image_width", 1000)
+        self.declare_parameter("image_width", 808)
         self.width = self.get_parameter("image_width").value
 
-        self.declare_parameter("image_height", 1000)
+        self.declare_parameter("image_height", 608)
         self.height = self.get_parameter("image_height").value
 
         self.declare_parameter("hz", "0.5")
@@ -110,7 +110,7 @@ class StereoReconstruction(Node):
 
         self.min_disp = 0
         # must be divisible by 16
-        self.num_disp = 160
+        self.num_disp = 176
 
         self.block_size = 11
         self.stereo = cv2.StereoSGBM_create(minDisparity = self.min_disp,

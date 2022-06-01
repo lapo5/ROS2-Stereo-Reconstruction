@@ -1,7 +1,7 @@
 stereo_calibration:
   ros__parameters:
 
-    number_of_images_to_calibrate: 10
+    number_of_images_to_calibrate: 20
     minimum_valid_images: 5
 
     board_dim: [5, 7]
