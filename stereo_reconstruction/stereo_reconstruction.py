@@ -108,11 +108,11 @@ class StereoReconstruction(Node):
         self.R = self.stereo_R
         self.T = self.stereo_T
 
-        self.min_disp = 16
+        self.min_disp = 0
         # must be divisible by 16
-        self.num_disp = 112 - self.min_disp
+        self.num_disp = 160
 
-        self.block_size = 7
+        self.block_size = 11
         self.stereo = cv2.StereoSGBM_create(minDisparity = self.min_disp,
                                         numDisparities = self.num_disp,
                                         blockSize = self.block_size,
