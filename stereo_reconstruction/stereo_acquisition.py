@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
+import numpy as np
+import cv2
+from cv_bridge import CvBridge
+import threading
 
-# Libraries
-import sys
-
-import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
-import cv2
-import numpy as np
-import os
-import json
-from time import sleep
-import threading
 from ament_index_python.packages import get_package_share_directory
 
 
@@ -22,16 +15,9 @@ class StereoAcquisition(Node):
         self.get_logger().info("Acquisition node is awake...")
 
         # Parameters declarations
-        self.declare_parameter("number_of_images_to_save", 10)
+        self.declare_parameter("number_of_images_to_save", 20)
         self.number_of_images_to_save = (
             self.get_parameter("number_of_images_to_save")
-            .get_parameter_value()
-            .integer_value
-        )
-
-        self.declare_parameter("minimum_valid_images", 10)
-        self.min_valid_images = (
-            self.get_parameter("minimum_valid_images")
             .get_parameter_value()
             .integer_value
         )
@@ -109,7 +95,7 @@ class StereoAcquisition(Node):
             self.timer = self.create_timer(self.time_for_frame, self.save_frame)
         else:
             self.get_logger().info(
-                "\n======== KEYBOARD COMMANDS ========\n\nq - quit pictures acquisition\nc - capture actual frame\n\n"
+                "\n############ KEYBOARD COMMANDS ############\n\nq - quit pictures acquisition\nc - capture actual frame\n\n"
             )
 
         while (
