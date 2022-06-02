@@ -1,7 +1,7 @@
 stereo_calibration:
   ros__parameters:
 
-    number_of_images_to_calibrate: 20
+    number_of_images_to_save: 20
     minimum_valid_images: 5
 
     board_dim: [5, 7]
@@ -20,4 +20,4 @@ stereo_calibration:
 
     single_cameras_calibrated: False
     
-    calibration_path: /home/marco/xarm_devel/src/ROS2-Stereo-3D-Reconstruction/calibration/
+    images_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Reconstruction/calibration_images
