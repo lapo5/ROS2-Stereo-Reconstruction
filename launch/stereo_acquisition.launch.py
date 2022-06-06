@@ -13,7 +13,7 @@ def generate_launch_description():
     params = os.path.join(
         get_package_share_directory("stereo_reconstruction"),
         "params",
-        "params_stereo_calibration.yaml",
+        "params_stereo_acquisition.yaml",
     )
 
     node_cam_right = Node(

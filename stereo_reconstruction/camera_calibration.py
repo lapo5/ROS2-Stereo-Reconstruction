@@ -16,14 +16,14 @@ import threading
 import cv2
 import numpy as np
 import glob
-from typing import Tuple
+from typing import Any, Tuple, List
 from tqdm import tqdm
 
 class camera_calibration():
     
 
     @staticmethod
-    def calibrate(images_path: str, chessboard_size: Tuple[int], frame_size: Tuple[int], **kwargs):
+    def calibrate(images_path: str, chessboard_size: List[int], frame_size: List[int], **kwargs):
         '''
         static method to calibrate a single camera.
         
@@ -33,10 +33,8 @@ class camera_calibration():
         
         '''
         
-        """ Optional:  criteria = None, display = False """
-        
-        display = kwargs.get('display', False)
-        criteria = kwargs.get('criteria', (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001))
+        display: bool = kwargs.get('display', False)
+        criteria: Any = kwargs.get('criteria', (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001))
         
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
         objp = np.zeros((chessboard_size[0] * chessboard_size[1], 3), np.float32)

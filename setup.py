@@ -25,6 +25,7 @@ setup(
     description="Stereo 3D Reconstruction",
     license="BSD",
     entry_points={
-        "console_scripts": ["stereo_acquisition_node = stereo_reconstruction.stereo_acquisition_node:main"],
+        "console_scripts": ["stereo_acquisition_node = stereo_reconstruction.stereo_acquisition_node:main",
+                            "stereo_calibration_node = stereo_reconstruction.stereo_calibration_node:main"],
     },
 )

@@ -19,9 +19,9 @@ from ament_index_python.packages import get_package_share_directory
 
 
 class StereoAcquisition(Node):
-    def __init__(self):
-        super().__init__("stereo_acquisition")
-        self.get_logger().info("Acquisition node is awake...")
+    def __init__(self) -> None:
+        super().__init__("stereo_acquisition_node")
+        self.get_logger().info("Stereo acquisition node is awake...")
 
         self.declare_parameter("acquisition_terminated", "False")
 
@@ -63,6 +63,8 @@ class StereoAcquisition(Node):
         self.images_path: str = (
             self.get_parameter("images_path").get_parameter_value().string_value
         )
+        
+        self.get_logger().warn(f"self.images_path: {self.images_path}")
 
         if self.images_path == "auto":
             package_share_directory = get_package_share_directory(
@@ -72,9 +74,12 @@ class StereoAcquisition(Node):
 
         self.left_images_path: str = self.images_path + "left/"
         self.right_images_path: str = self.images_path + "right/"
-
+        
+        
+        
         self.remove_file_from_dir(self.left_images_path)
         self.remove_file_from_dir(self.right_images_path)
+
 
         self.bridge = CvBridge()
         self.counter_left_images: int = 0
@@ -215,10 +220,10 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("[Acquisition node] Node stopped cleanly")
+        node.get_logger().info("[Stereo acquisition node] Node stopped cleanly")
         node.exit()
     except BaseException:
-        node.get_logger().info("[Acquisition node]] Exception:", file=sys.stderr)
+        node.get_logger().info("[Stereo acquisition node] Exception:", file=sys.stderr)
         node.exit()
         raise
     finally:

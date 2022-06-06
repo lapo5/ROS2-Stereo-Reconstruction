@@ -1,72 +1,87 @@
-#!/usr/bin/env python3
-import numpy as np
-import cv2
-from cv_bridge import CvBridge
-import glob
+import sys
 
+import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
 from ament_index_python.packages import get_package_share_directory
 
+from typing import  List
 
-class StereoCalibration(Node):
-    def __init__(self):
+from stereo_reconstruction.camera_calibration import camera_calibration
+
+
+
+from stereo_reconstruction.stereo_acquisition_node import StereoAcquisition 
+
+
+class StereoCalibrationNode(Node):
+    def __init__(self) -> None:
         super().__init__("stereo_calibration")
-        self.get_logger().info("Stereo calibration node is awake...")
+        self.get_logger().info("Calibration node is awake...")
+
+        self.declare_parameter("acquisition_terminated", "False")
 
         # Parameters declarations
-        self.declare_parameter("board_dim", [6, 8])
-        self.board_dim = (
-            self.get_parameter("board_dim").get_parameter_value().integer_array_value
+        
+        self.declare_parameter("image_size", [800, 600])
+        self.image_size: List[int] = (
+            self.get_parameter("image_size").get_parameter_value().integer_array_value
         )
-
-        self.declare_parameter("width_image", 808)
-        self.width_image = (
-            self.get_parameter("width_image").get_parameter_value().integer_value
+        
+        self.get_logger().info(f"Image size: {self.image_size}")
+        
+        self.declare_parameter("chessboard_size", [6, 8])
+        self.chessboard_size: List[int] = (
+            self.get_parameter("chessboard_size").get_parameter_value().integer_array_value
         )
-
-        self.declare_parameter("height_image", 608)
-        self.height_image = (
-            self.get_parameter("height_image").get_parameter_value().integer_value
-        )
-
-        self.declare_parameter("square_size", "28.0")
-        self.square_size = (
+        
+        self.get_logger().info(f"Chessboard size: {self.chessboard_size}")
+        
+        self.declare_parameter("square_size", 20.0)
+        self.square_size: float = (
             self.get_parameter("square_size").get_parameter_value().double_value
         )
-
+        
+        self.get_logger().info(f"Chessboard size: {self.chessboard_size}")
+                
         self.declare_parameter("images_path", "auto")
-        self.images_path = (
+        self.images_path: str = (
             self.get_parameter("images_path").get_parameter_value().string_value
         )
 
-        if self.left_images_path == "auto":
+        if self.images_path == "auto":
             package_share_directory = get_package_share_directory(
                 "stereo_reconstruction"
             )
-            self.images_path = package_share_directory + "/calibration_images/left/"
+            self.images_path = package_share_directory + "/calibration_images/"
 
-        if self.right_images_path == "auto":
-            package_share_directory = get_package_share_directory(
-                "stereo_reconstruction"
-            )
-            self.images_path = package_share_directory + "/calibration_images/right/"
+        self.left_images_path: str = self.images_path + "left/"
+        self.right_images_path: str = self.images_path + "right/"
+        
+        self.get_logger().info(f"Dict camera_1: {camera_calibration.calibrate(self.left_images_path, self.chessboard_size, self.image_size)}")
+        self.get_logger().info(f"Dict camera_2: {camera_calibration.calibrate(self.right_images_path, self.chessboard_size, self.image_size)}")
+        
+        
+        
+        
+        
 
-        self.declare_parameter("calibration_path", "auto")
-        self.calibration_path = (
-            self.get_parameter("calibration_path").get_parameter_value().string_value
-        )
+def main(args=None):
 
-        if self.calibration_path == "auto":
-            package_share_directory = get_package_share_directory(
-                "stereo_reconstruction"
-            )
-            self.calibration_path = package_share_directory + "/calibration/"
+    rclpy.init(args=args)
+    node = StereoCalibrationNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info("[Calibration node] Node stopped cleanly")
+        node.exit()
+    except BaseException:
+        node.get_logger().info("[Calibration node] Exception:", file=sys.stderr)
+        node.exit()
+        raise
+    finally:
+        rclpy.shutdown()
 
-        self.left_images = self.load_images(self.left_images_path + "/*.png")
-        self.right_images = self.load_images(self.right_images_path + "/*.png")
 
-    def load_images(self, path):
-        filenames = glob.glob(path)
-        filenames.sort()
-        return [cv2.imread(img) for img in filenames]
+if __name__ == "__main__":
+    main()
+    
