@@ -133,10 +133,6 @@ class StereoAcquisition(Node):
             and self.counter_right_images <= self.number_of_images_to_save
         ):
 
-            self.get_logger().info(
-                f"self.counter_left_images: {self.counter_left_images} and self.counter_right_images: {self.counter_right_images}"
-            )
-
             horizontal_concat = np.concatenate(
                 (self.current_frame_left, self.current_frame_right), axis=1
             )
