@@ -1,7 +1,7 @@
-main_node:
+stereo_acquisition_node:
   ros__parameters:
 
-    number_of_images_to_save: 50
+    number_of_images_to_save: 10
     minimum_valid_images: 10
 
     board_dim: [5, 7]
@@ -17,8 +17,6 @@ main_node:
     auto_capture:
       mode: True            # Capture an image every
       time_for_frame: 2.0   # sec
-
-    single_cameras_calibrated: False
     
     images_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Reconstruction/calibration_images/
     calibration_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-3D-Reconstruction/calibration/
