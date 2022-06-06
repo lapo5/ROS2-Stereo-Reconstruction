@@ -1,8 +1,8 @@
-stereo_calibration:
+main_node:
   ros__parameters:
 
-    number_of_images_to_save: 20
-    minimum_valid_images: 5
+    number_of_images_to_save: 50
+    minimum_valid_images: 10
 
     board_dim: [5, 7]
     square_size: 22.0 # mm
@@ -20,4 +20,5 @@ stereo_calibration:
 
     single_cameras_calibrated: False
     
-    images_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Reconstruction/calibration_images
+    images_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Reconstruction/calibration_images/
+    calibration_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-3D-Reconstruction/calibration/

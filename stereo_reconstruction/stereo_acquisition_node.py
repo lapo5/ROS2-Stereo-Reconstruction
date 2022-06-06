@@ -2,7 +2,6 @@
 import numpy as np
 import cv2
 from cv_bridge import CvBridge
-import threading
 
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -13,6 +12,8 @@ class StereoAcquisition(Node):
     def __init__(self):
         super().__init__("stereo_acquisition")
         self.get_logger().info("Acquisition node is awake...")
+        
+        self.get_logger().info("ECCOMI")
 
         # Parameters declarations
         self.declare_parameter("number_of_images_to_save", 20)
@@ -22,12 +23,16 @@ class StereoAcquisition(Node):
             .integer_value
         )
 
+        self.get_logger().info(f"self.number_of_images_to_save: {self.number_of_images_to_save}")
+
         self.declare_parameter("subscribers.camera_left", "/camera_left/raw_frame")
         self.camera_left_topic = (
             self.get_parameter("subscribers.camera_left")
             .get_parameter_value()
             .string_value
         )
+
+        self.get_logger().info(f"self.camera_left_topic: {self.camera_left_topic}")
 
         self.declare_parameter("subscribers.camera_right", "/camera_right/raw_frame")
         self.camera_right_topic = (
@@ -41,12 +46,16 @@ class StereoAcquisition(Node):
             self.get_parameter("auto_capture.mode").get_parameter_value().bool_value
         )
 
+        self.get_logger().info(f"self.auto_capture: {self.auto_capture}")
+
         self.declare_parameter("auto_capture.time_for_frame", True)
         self.time_for_frame = (
             self.get_parameter("auto_capture.time_for_frame")
             .get_parameter_value()
             .double_value
         )
+
+        self.get_logger().info(f"self.time_for_frame: {self.time_for_frame}")
 
         self.declare_parameter("images_path", "auto")
         self.images_path = (
@@ -58,6 +67,8 @@ class StereoAcquisition(Node):
                 "stereo_reconstruction"
             )
             self.images_path = package_share_directory + "/calibration_images/"
+
+        self.get_logger().info(f"self.images_path: {self.images_path}")
 
         self.bridge = CvBridge()
         self.counter_left_images = 0
@@ -74,10 +85,10 @@ class StereoAcquisition(Node):
             Image, self.camera_right_topic, self.callback_frame_right, 1
         )
 
-        self.aquisition_thread = threading.Thread(
-            target=self.acquisition_process, daemon=True
-        )
-        self.aquisition_thread.start()
+        # self.acquisition_thread = threading.Thread(
+        #     target=self.acquisition_process, daemon=True
+        # )
+        # self.acquisition_thread.start()
 
     def callback_frame_left(self, msg):
         self.current_frame_left = self.bridge.imgmsg_to_cv2(msg)
