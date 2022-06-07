@@ -20,7 +20,7 @@ from ament_index_python.packages import get_package_share_directory
 
 class StereoAcquisition(Node):
     def __init__(self) -> None:
-        super().__init__("stereo_acquisition_node")
+        super().__init__("stereo_acquisition")
         self.get_logger().info("Stereo acquisition node is awake...")
 
         self.declare_parameter("acquisition_terminated", "False")
@@ -32,6 +32,8 @@ class StereoAcquisition(Node):
             .get_parameter_value()
             .integer_value
         )
+        
+        self.get_logger().warn(f"self.number_of_images_to_save: {self.number_of_images_to_save}")
 
         self.declare_parameter("subscribers.camera_left", "/camera_left/raw_frame")
         self.camera_left_topic: str = (
@@ -77,8 +79,8 @@ class StereoAcquisition(Node):
         
         
         
-        self.remove_file_from_dir(self.left_images_path)
-        self.remove_file_from_dir(self.right_images_path)
+        # self.remove_file_from_dir(self.left_images_path)
+        # self.remove_file_from_dir(self.right_images_path)
 
 
         self.bridge = CvBridge()

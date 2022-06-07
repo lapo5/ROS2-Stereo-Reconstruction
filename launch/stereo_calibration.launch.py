@@ -15,8 +15,8 @@ def generate_launch_description():
 
     stereo_acquisition_node = Node(
         package="stereo_reconstruction",
-        executable="stereo_calibration_node",
-        name="stereo_calibration_node",
+        executable="stereo_calibration",
+        name="stereo_calibration",
         parameters=[params],
     ) 
 

@@ -1,4 +1,4 @@
-stereo_acquisition_node:
+stereo_acquisition:
   ros__parameters:
 
     number_of_images_to_save: 100
