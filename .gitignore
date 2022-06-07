@@ -138,5 +138,5 @@ dmypy.json
 cython_debug/
 
 
-src/ROS2-Stereo-Reconstruction/calibration_images/left/
-src/ROS2-Stereo-Reconstruction/calibration_images/right/
+*.png
+
