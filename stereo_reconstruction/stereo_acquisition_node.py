@@ -77,11 +77,8 @@ class StereoAcquisition(Node):
         self.left_images_path: str = self.images_path + "left/"
         self.right_images_path: str = self.images_path + "right/"
         
-        
-        
         # self.remove_file_from_dir(self.left_images_path)
         # self.remove_file_from_dir(self.right_images_path)
-
 
         self.bridge = CvBridge()
         self.counter_left_images: int = 0

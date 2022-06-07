@@ -9,4 +9,4 @@ stereo_calibration:
     image_size: [808, 608] # (width, height)
     
     images_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Reconstruction/calibration_images/
-    calibration_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-3D-Reconstruction/calibration/
+    calibration_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Reconstruction/calibration/
