@@ -6,15 +6,8 @@ from ament_index_python.packages import get_package_share_directory
 from typing import List
 
 from stereo_reconstruction.camera_calibration import CameraCalibration
+from stereo_reconstruction.stereo_calibration import StereoCalibration
 
-
-import cv2
-import numpy as np
-import json
-import glob
-import os
-
-from stereo_reconstruction.stereo_acquisition_node import StereoAcquisition
 
 
 class StereoCalibrationNode(Node):
@@ -91,6 +84,22 @@ class StereoCalibrationNode(Node):
             self.get_logger().info(f"Exception: {e}")
 
         #################### STEREO CALIBRATION ####################
+        
+        self.get_logger().info("Start Stereo Calibration")
+        
+        stereo_calibration = StereoCalibration()
+        
+        try:
+            stereo_params = stereo_calibration.calibrate(left_cam_params, right_cam_params)
+        except Exception as e:
+            self.get_logger().info(f"Exception: {e}")
+        
+        
+        self.get_logger().info("Save Stereo Calibration")
+
+        stereo_calibration.save_params(self.calibration_path, "calib_params_stereo.json")
+        
+        self.get_logger().info("End Stereo Calibration")
 
 
 def main(args=None):
@@ -100,10 +109,10 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("[Calibration node] Node stopped cleanly")
+        node.get_logger().info("[Stereo calibration node] Node stopped cleanly")
         node.exit()
     except BaseException:
-        node.get_logger().info("[Calibration node] Exception:", file=sys.stderr)
+        node.get_logger().info("[Stereo calibration node] Exception:", file=sys.stderr)
         node.exit()
         raise
     finally:

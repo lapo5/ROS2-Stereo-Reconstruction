@@ -20,6 +20,7 @@ class CameraCalibration:
     ):
 
         self.images_path = images_path
+        self.image_size = image_size
 
         display: bool = kwargs.get("display", False)
         criteria: Any = kwargs.get(
@@ -107,6 +108,7 @@ class CameraCalibration:
             "mean_error": self.mean_error,
             "img_points": self.img_points,
             "obj_points": self.obj_points,
+            "img_size": self.image_size
         }
 
     def save_params(self, path: str, filename: str):
