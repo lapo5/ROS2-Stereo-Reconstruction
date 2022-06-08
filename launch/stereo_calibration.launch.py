@@ -6,7 +6,7 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    
+
     params_stereo_calibration_filepath = os.path.join(
         get_package_share_directory("stereo_reconstruction"),
         "params",
@@ -18,10 +18,10 @@ def generate_launch_description():
         executable="stereo_calibration",
         name="stereo_calibration",
         output={
-                    "stdout": "screen",
-                    "stderr": "screen",
-            },
+            "stdout": "screen",
+            "stderr": "screen",
+        },
         parameters=[params_stereo_calibration_filepath],
-    ) 
+    )
 
     return LaunchDescription([stereo_calibration_node])

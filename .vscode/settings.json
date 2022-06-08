@@ -1,0 +1,18 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/antonino/Desktop/work/stereo_ws/build/stereo_reconstruction",
+        "/home/antonino/Desktop/work/stereo_ws/install/stereo_reconstruction/lib/python3.8/site-packages",
+        "/home/antonino/Desktop/work/stereo_ws/build/hal_allied_vision_camera",
+        "/home/antonino/Desktop/work/stereo_ws/install/hal_allied_vision_camera/lib/python3.8/site-packages",
+        "/home/antonino/Desktop/work/stereo_ws/install/allied_vision_camera_interfaces/lib/python3.8/site-packages",
+        "/opt/ros/foxy/lib/python3.8/site-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/antonino/Desktop/work/stereo_ws/build/stereo_reconstruction",
+        "/home/antonino/Desktop/work/stereo_ws/install/stereo_reconstruction/lib/python3.8/site-packages",
+        "/home/antonino/Desktop/work/stereo_ws/build/hal_allied_vision_camera",
+        "/home/antonino/Desktop/work/stereo_ws/install/hal_allied_vision_camera/lib/python3.8/site-packages",
+        "/home/antonino/Desktop/work/stereo_ws/install/allied_vision_camera_interfaces/lib/python3.8/site-packages",
+        "/opt/ros/foxy/lib/python3.8/site-packages"
+    ]
+}

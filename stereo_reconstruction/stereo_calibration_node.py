@@ -9,7 +9,6 @@ from stereo_reconstruction.camera_calibration import CameraCalibration
 from stereo_reconstruction.stereo_calibration import StereoCalibration
 
 
-
 class StereoCalibrationNode(Node):
     def __init__(self) -> None:
         super().__init__("stereo_calibration")
@@ -77,29 +76,35 @@ class StereoCalibrationNode(Node):
             cam_l_calibration.save_params(
                 self.calibration_path, "calib_params_left_cam.json"
             )
+            self.get_logger().info(
+                f'Left camera calibrated. Mean error: {left_cam_params["mean_error"]:.5f}.'
+            )
             cam_r_calibration.save_params(
                 self.calibration_path, "calib_params_right_cam.json"
+            )
+            self.get_logger().info(
+                f'Right camera calibrated. Mean error: {right_cam_params["mean_error"]:.5f}.'
             )
         except Exception as e:
             self.get_logger().info(f"Exception: {e}")
 
         #################### STEREO CALIBRATION ####################
-        
-        self.get_logger().info("Start Stereo Calibration")
-        
+
         stereo_calibration = StereoCalibration()
-        
+
         try:
-            stereo_params = stereo_calibration.calibrate(left_cam_params, right_cam_params)
+            stereo_params = stereo_calibration.calibrate(
+                left_cam_params, right_cam_params
+            )
+            self.get_logger().info(
+                f'Stereo system calibrated. Rectification roi_right: {stereo_params["roi1"]} and roi_left:{stereo_params["roi2"]}.'
+            )
         except Exception as e:
             self.get_logger().info(f"Exception: {e}")
-        
-        
-        self.get_logger().info("Save Stereo Calibration")
 
-        stereo_calibration.save_params(self.calibration_path, "calib_params_stereo.json")
-        
-        self.get_logger().info("End Stereo Calibration")
+        stereo_calibration.save_params(
+            self.calibration_path, "calib_params_stereo.json"
+        )
 
 
 def main(args=None):

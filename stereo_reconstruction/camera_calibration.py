@@ -11,6 +11,17 @@ from typing import Any, List
 
 
 class CameraCalibration:
+    def __init__(self) -> None:
+        self.calibration_data = {
+            "image_size": None,
+            "valid_images": None,
+            "img_points": None,
+            "obj_points": None,
+            "mtx": None,
+            "dist": None,
+            "mean_error": None,
+        }
+
     def calibrate(
         self,
         images_path: str,
@@ -18,9 +29,6 @@ class CameraCalibration:
         image_size: List[int],
         **kwargs,
     ):
-
-        self.images_path = images_path
-        self.image_size = image_size
 
         display: bool = kwargs.get("display", False)
         criteria: Any = kwargs.get(
@@ -34,18 +42,18 @@ class CameraCalibration:
         ].T.reshape(-1, 2)
 
         # Arrays to store object points and image points from all the images.
-        self.obj_points = []  # 3d point in real world space
-        self.img_points = []  # 2d points in image plane.
+        obj_points = []  # 3d point in real world space
+        img_points = []  # 2d points in image plane.
 
-        if self.images_path is None:  # assumes same directory
+        if images_path is None:  # assumes same directory
             images = glob.glob("*.png")
         else:
-            images = glob.glob(os.path.join(self.images_path, "*.png"))
+            images = glob.glob(os.path.join(images_path, "*.png"))
 
         if images == []:
             raise ValueError("No images found in specified directory.")
 
-        self.valid_images = 0
+        valid_images = 0
 
         for fname in images:
 
@@ -60,12 +68,12 @@ class CameraCalibration:
             # If found, add object points, image points (after refining them)
             if ret == True:
 
-                self.obj_points.append(objp)
+                obj_points.append(objp)
 
                 corners = cv2.cornerSubPix(
                     gray_img, corners, (11, 11), (-1, -1), criteria
                 )
-                self.img_points.append(corners)
+                img_points.append(corners)
 
                 cv2.drawChessboardCorners(img, chessboard_size, corners, ret)
 
@@ -73,43 +81,43 @@ class CameraCalibration:
                 if display:
                     cv2.imshow("Image", img)
                     cv2.waitKey(1000)
-                self.valid_images += 1
-                if self.valid_images >= 5:
+                valid_images += 1
+                if valid_images >= 5:
                     break
 
         cv2.destroyAllWindows()
 
         ############## CALIBRATION ##############
-        ret, self.mtx, self.dist, rvecs, tvecs = cv2.calibrateCamera(
-            self.obj_points, self.img_points, image_size, None, None
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+            obj_points, img_points, image_size, None, None
         )
         # height, width, channels = img.shape
         # new_calib_params, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
 
         # Evaluate the mean error i.e. the calibration reprojection error
         tot_error = 0
-        for i in range(len(self.obj_points)):
+        for i in range(len(obj_points)):
 
             img_points_2, _ = cv2.projectPoints(
-                self.obj_points[i], rvecs[i], tvecs[i], self.mtx, self.dist
+                obj_points[i], rvecs[i], tvecs[i], mtx, dist
             )
-            error = cv2.norm(self.img_points[i], img_points_2, cv2.NORM_L2) / len(
+            error = cv2.norm(img_points[i], img_points_2, cv2.NORM_L2) / len(
                 img_points_2
             )
 
             tot_error += error
 
-        self.mean_error = tot_error / len(self.obj_points)
+        mean_error = tot_error / len(obj_points)
 
-        return {
-            "valid_images": self.valid_images,
-            "mtx": self.mtx,
-            "dist": self.dist,
-            "mean_error": self.mean_error,
-            "img_points": self.img_points,
-            "obj_points": self.obj_points,
-            "img_size": self.image_size
-        }
+        self.calibration_data["image_size"] = image_size
+        self.calibration_data["valid_images"] = valid_images
+        self.calibration_data["img_points"] = img_points
+        self.calibration_data["obj_points"] = obj_points
+        self.calibration_data["mtx"] = mtx
+        self.calibration_data["dist"] = dist
+        self.calibration_data["mean_error"] = mean_error
+
+        return self.calibration_data
 
     def save_params(self, path: str, filename: str):
 
@@ -119,8 +127,12 @@ class CameraCalibration:
         try:
             with open(path + filename, "w+") as outfile:
                 calib_params = {"mtx": [], "dist": []}
-                calib_params["mtx"] = [self.mtx.flatten()[i] for i in range(9)]
-                calib_params["dist"] = [self.dist.flatten()[i] for i in range(5)]
+                calib_params["mtx"] = [
+                    self.calibration_data["mtx"].flatten()[i] for i in range(9)
+                ]
+                calib_params["dist"] = [
+                    self.calibration_data["dist"].flatten()[i] for i in range(5)
+                ]
                 json.dump(calib_params, outfile)
         except FileNotFoundError:
             raise FileNotFoundError(f"The {path+filename} directory does not exist")
