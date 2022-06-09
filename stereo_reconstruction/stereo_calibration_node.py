@@ -29,7 +29,7 @@ class StereoCalibrationNode(Node):
             .get_parameter_value()
             .integer_array_value
         )
-        
+
         self.declare_parameter("square_size", 20.0)
         self.square_size = (
             self.get_parameter("square_size").get_parameter_value().double_value
@@ -41,7 +41,6 @@ class StereoCalibrationNode(Node):
             .get_parameter_value()
             .integer_value
         )
-
 
         self.declare_parameter("calibration_path", "auto")
         self.calibration_path = (

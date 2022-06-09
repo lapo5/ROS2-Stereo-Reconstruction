@@ -32,8 +32,10 @@ class StereoAcquisition(Node):
             .get_parameter_value()
             .integer_value
         )
-        
-        self.get_logger().warn(f"self.number_of_images_to_save: {self.number_of_images_to_save}")
+
+        self.get_logger().warn(
+            f"self.number_of_images_to_save: {self.number_of_images_to_save}"
+        )
 
         self.declare_parameter("subscribers.camera_left", "/camera_left/raw_frame")
         self.camera_left_topic: str = (
@@ -65,7 +67,7 @@ class StereoAcquisition(Node):
         self.images_path: str = (
             self.get_parameter("images_path").get_parameter_value().string_value
         )
-        
+
         self.get_logger().warn(f"self.images_path: {self.images_path}")
 
         if self.images_path == "auto":
@@ -76,7 +78,7 @@ class StereoAcquisition(Node):
 
         self.left_images_path: str = self.images_path + "left/"
         self.right_images_path: str = self.images_path + "right/"
-        
+
         # self.remove_file_from_dir(self.left_images_path)
         # self.remove_file_from_dir(self.right_images_path)
 
