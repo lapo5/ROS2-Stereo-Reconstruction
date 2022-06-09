@@ -22,7 +22,7 @@ def generate_launch_description():
     params_stereo_filepath = os.path.join(
         get_package_share_directory("stereo_reconstruction"),
         "params",
-        "params_stereo_acquisition.yaml",
+        "params_stereo_reconstruction.yaml",
     )
 
     # with open(configFilepath, 'r') as file:
@@ -44,8 +44,8 @@ def generate_launch_description():
 
     stereo_acquisition_node = Node(
         package="stereo_reconstruction",
-        executable="stereo_acquisition",
-        name="stereo_acquisition",
+        executable="stereo_reconstruction",
+        name="stereo_reconstruction",
         parameters=[params_stereo_filepath],
     )
 
