@@ -1,10 +1,10 @@
 stereo_calibration:
   ros__parameters:
 
-    minimum_valid_images: 10
+    minimum_valid_images: 21
 
     chessboard_size: [5, 7]
-    square_size: 22.0 # mm
+    square_size: 23.0 # mm
 
     image_size: [808, 608] # (width, height)
     

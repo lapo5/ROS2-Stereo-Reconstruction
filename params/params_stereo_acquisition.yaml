@@ -1,15 +1,14 @@
 stereo_acquisition:
   ros__parameters:
 
-    number_of_images_to_save: 100
-    minimum_valid_images: 10
+    number_of_images_to_save: 25
 
     subscribers:
       camera_left: /camera_left/raw_frame
       camera_right: /camera_right/raw_frame
 
     auto_capture:
-      mode: True            # Capture an image every
+      mode: False            # Capture an image every
       time_for_frame: 2.0   # sec
     
     images_path: /home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Reconstruction/calibration_images/

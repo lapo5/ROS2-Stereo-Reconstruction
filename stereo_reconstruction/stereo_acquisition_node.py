@@ -81,8 +81,8 @@ class StereoAcquisition(Node):
         # self.remove_file_from_dir(self.right_images_path)
 
         self.bridge = CvBridge()
-        self.counter_left_images: int = 0
-        self.counter_right_images: int = 0
+        self.counter_left_images: int = 18
+        self.counter_right_images: int = 18
 
         self.current_frame_left: List[float] = []
         self.current_frame_right: List[float] = []

@@ -7,12 +7,12 @@ import json
 import cv2
 import numpy as np
 import glob
-from typing import Any, List
+from typing import Any, List, Dict
 
 
 class CameraCalibration:
     def __init__(self) -> None:
-        self.calibration_data = {
+        self._calibration_data = {
             "image_size": None,
             "valid_images": None,
             "img_points": None,
@@ -27,8 +27,9 @@ class CameraCalibration:
         images_path: str,
         chessboard_size: List[int],
         image_size: List[int],
+        minimum_valid_images: int,
         **kwargs,
-    ):
+    ) -> Dict[str, Any]:
 
         display: bool = kwargs.get("display", False)
         criteria: Any = kwargs.get(
@@ -82,8 +83,10 @@ class CameraCalibration:
                     cv2.imshow("Image", img)
                     cv2.waitKey(1000)
                 valid_images += 1
-                if valid_images >= 5:
+                if valid_images >= minimum_valid_images:
                     break
+        if valid_images < minimum_valid_images:
+            return {}
 
         cv2.destroyAllWindows()
 
@@ -92,7 +95,7 @@ class CameraCalibration:
             obj_points, img_points, image_size, None, None
         )
         # height, width, channels = img.shape
-        # new_calib_params, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
+        # new_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
 
         # Evaluate the mean error i.e. the calibration reprojection error
         tot_error = 0
@@ -109,15 +112,19 @@ class CameraCalibration:
 
         mean_error = tot_error / len(obj_points)
 
-        self.calibration_data["image_size"] = image_size
-        self.calibration_data["valid_images"] = valid_images
-        self.calibration_data["img_points"] = img_points
-        self.calibration_data["obj_points"] = obj_points
-        self.calibration_data["mtx"] = mtx
-        self.calibration_data["dist"] = dist
-        self.calibration_data["mean_error"] = mean_error
+        self._calibration_data["image_size"] = image_size
+        self._calibration_data["valid_images"] = valid_images
+        self._calibration_data["img_points"] = img_points
+        self._calibration_data["obj_points"] = obj_points
+        self._calibration_data["mtx"] = mtx
+        self._calibration_data["dist"] = dist
+        self._calibration_data["mean_error"] = mean_error
 
-        return self.calibration_data
+        return self._calibration_data
+    
+    @property
+    def calibration_data(self):
+        return self._calibration_data
 
     def save_params(self, path: str, filename: str):
 
@@ -128,10 +135,10 @@ class CameraCalibration:
             with open(path + filename, "w+") as outfile:
                 calib_params = {"mtx": [], "dist": []}
                 calib_params["mtx"] = [
-                    self.calibration_data["mtx"].flatten()[i] for i in range(9)
+                    self._calibration_data["mtx"].flatten()[i] for i in range(9)
                 ]
                 calib_params["dist"] = [
-                    self.calibration_data["dist"].flatten()[i] for i in range(5)
+                    self._calibration_data["dist"].flatten()[i] for i in range(5)
                 ]
                 json.dump(calib_params, outfile)
         except FileNotFoundError:

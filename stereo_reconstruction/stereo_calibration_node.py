@@ -19,24 +19,32 @@ class StereoCalibrationNode(Node):
         # Parameters declarations
 
         self.declare_parameter("image_size", [800, 600])
-        self.image_size: List[int] = (
+        self.image_size = (
             self.get_parameter("image_size").get_parameter_value().integer_array_value
         )
 
         self.declare_parameter("chessboard_size", [6, 8])
-        self.chessboard_size: List[int] = (
+        self.chessboard_size = (
             self.get_parameter("chessboard_size")
             .get_parameter_value()
             .integer_array_value
         )
-
+        
         self.declare_parameter("square_size", 20.0)
-        self.square_size: float = (
+        self.square_size = (
             self.get_parameter("square_size").get_parameter_value().double_value
         )
 
+        self.declare_parameter("minimum_valid_images", 20)
+        self.minimum_valid_images = (
+            self.get_parameter("minimum_valid_images")
+            .get_parameter_value()
+            .integer_value
+        )
+
+
         self.declare_parameter("calibration_path", "auto")
-        self.calibration_path: str = (
+        self.calibration_path = (
             self.get_parameter("calibration_path").get_parameter_value().string_value
         )
 
@@ -47,7 +55,7 @@ class StereoCalibrationNode(Node):
             self.calibration_path = package_share_directory + "/calibration/"
 
         self.declare_parameter("images_path", "auto")
-        self.images_path: str = (
+        self.images_path = (
             self.get_parameter("images_path").get_parameter_value().string_value
         )
 
@@ -57,8 +65,8 @@ class StereoCalibrationNode(Node):
             )
             self.images_path = package_share_directory + "/calibration_images/"
 
-        self.left_images_path: str = self.images_path + "left/"
-        self.right_images_path: str = self.images_path + "right/"
+        self.left_images_path = self.images_path + "left/"
+        self.right_images_path = self.images_path + "right/"
 
         #################### SINGLE CAMERA CALIBRATION ####################
 
@@ -66,11 +74,22 @@ class StereoCalibrationNode(Node):
         cam_r_calibration = CameraCalibration()
 
         left_cam_params = cam_l_calibration.calibrate(
-            self.left_images_path, self.chessboard_size, self.image_size
+            self.left_images_path,
+            self.chessboard_size,
+            self.image_size,
+            self.minimum_valid_images,
         )
         right_cam_params = cam_r_calibration.calibrate(
-            self.right_images_path, self.chessboard_size, self.image_size
+            self.right_images_path,
+            self.chessboard_size,
+            self.image_size,
+            self.minimum_valid_images,
         )
+
+        if not left_cam_params or not right_cam_params:
+            raise Exception(
+                "Minimum number of valid images not reached in camera calibration."
+            )
 
         try:
             cam_l_calibration.save_params(
@@ -99,6 +118,7 @@ class StereoCalibrationNode(Node):
             self.get_logger().info(
                 f'Stereo system calibrated. Rectification roi_right: {stereo_params["roi1"]} and roi_left:{stereo_params["roi2"]}.'
             )
+            self.get_logger().info(f'Translation: {stereo_params["T"]}.')
         except Exception as e:
             self.get_logger().info(f"Exception: {e}")
 

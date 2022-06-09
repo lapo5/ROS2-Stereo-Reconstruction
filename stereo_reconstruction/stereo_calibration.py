@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 
 class StereoCalibration:
     def __init__(self) -> None:
-        self.calib_params = {
+        self._calibration_data = {
             "R": None,
             "T": None,
             "E": None,
@@ -53,6 +53,8 @@ class StereoCalibration:
         dist_1 = camera_1_parameters["dist"]
         mtx_2 = camera_2_parameters["mtx"]
         dist_2 = camera_2_parameters["dist"]
+
+        # This step is performed to transformation between the two cameras and calculate Essential and Fundamenatl matrix
         ret, mtx_1, dist_1, mtx_2, dist_2, R, T, E, F = cv2.stereoCalibrate(
             objpoints,
             imgpoints_1,
@@ -65,6 +67,8 @@ class StereoCalibration:
             criteria=criteria,
             flags=flags,
         )
+
+        # Knowing the transformation between the two cameras (extrinsice parameters), we can perform stereo rectification
         R1, R2, P1, P2, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(
             mtx_1,
             dist_1,
@@ -73,28 +77,32 @@ class StereoCalibration:
             camera_1_parameters["image_size"],
             R,
             T,
-            alpha=alpha,
+            alpha=alpha,  # rectify_scale: if 0 image croped, if 1 image not croped
             newImageSize=newImageSize,
         )
 
-        self.calib_params["R"] = R
-        self.calib_params["T"] = T
-        self.calib_params["E"] = E
-        self.calib_params["F"] = F
-        self.calib_params["R1"] = R1
-        self.calib_params["R2"] = R2
-        self.calib_params["P1"] = P1
-        self.calib_params["P2"] = P2
-        self.calib_params["Q"] = Q
-        self.calib_params["roi1"] = validPixROI1
-        self.calib_params["roi2"] = validPixROI1
-        self.calib_params["ret"] = ret
-        self.calib_params["mtx_1"] = mtx_1
-        self.calib_params["dist_1"] = dist_1
-        self.calib_params["mtx_2"] = mtx_2
-        self.calib_params["dist_2"] = dist_2
+        self._calibration_data["R"] = R
+        self._calibration_data["T"] = T
+        self._calibration_data["E"] = E
+        self._calibration_data["F"] = F
+        self._calibration_data["R1"] = R1
+        self._calibration_data["R2"] = R2
+        self._calibration_data["P1"] = P1
+        self._calibration_data["P2"] = P2
+        self._calibration_data["Q"] = Q
+        self._calibration_data["roi1"] = validPixROI1
+        self._calibration_data["roi2"] = validPixROI1
+        self._calibration_data["ret"] = ret
+        self._calibration_data["mtx_1"] = mtx_1
+        self._calibration_data["dist_1"] = dist_1
+        self._calibration_data["mtx_2"] = mtx_2
+        self._calibration_data["dist_2"] = dist_2
 
-        return self.calib_params
+        return self._calibration_data
+    
+    @property
+    def calibration_data(self):
+        return self._calibration_data
 
     def save_params(self, path: str, filename: str):
 
@@ -104,7 +112,7 @@ class StereoCalibration:
         try:
             with open(path + filename, "w+") as outfile:
 
-                calib_params = {
+                _calibration_data = {
                     "R": [],
                     "T": [],
                     "R1": [],
@@ -114,30 +122,30 @@ class StereoCalibration:
                     "Q": [],
                 }
 
-                calib_params["R"] = [
-                    self.calib_params["R"].flatten()[i] for i in range(9)
+                _calibration_data["R"] = [
+                    self._calibration_data["R"].flatten()[i] for i in range(9)
                 ]
-                calib_params["T"] = [
-                    self.calib_params["T"].flatten()[i] for i in range(3)
-                ]
-
-                calib_params["R1"] = [
-                    self.calib_params["R1"].flatten()[i] for i in range(9)
-                ]
-                calib_params["R2"] = [
-                    self.calib_params["R2"].flatten()[i] for i in range(9)
-                ]
-                calib_params["P1"] = [
-                    self.calib_params["P1"].flatten()[i] for i in range(12)
-                ]
-                calib_params["P2"] = [
-                    self.calib_params["P2"].flatten()[i] for i in range(12)
+                _calibration_data["T"] = [
+                    self._calibration_data["T"].flatten()[i] for i in range(3)
                 ]
 
-                calib_params["Q"] = [
-                    self.calib_params["Q"].flatten()[i] for i in range(16)
+                _calibration_data["R1"] = [
+                    self._calibration_data["R1"].flatten()[i] for i in range(9)
+                ]
+                _calibration_data["R2"] = [
+                    self._calibration_data["R2"].flatten()[i] for i in range(9)
+                ]
+                _calibration_data["P1"] = [
+                    self._calibration_data["P1"].flatten()[i] for i in range(12)
+                ]
+                _calibration_data["P2"] = [
+                    self._calibration_data["P2"].flatten()[i] for i in range(12)
                 ]
 
-                json.dump(calib_params, outfile)
+                _calibration_data["Q"] = [
+                    self._calibration_data["Q"].flatten()[i] for i in range(16)
+                ]
+
+                json.dump(_calibration_data, outfile)
         except FileNotFoundError:
             raise FileNotFoundError(f"The {path+filename} directory does not exist")
