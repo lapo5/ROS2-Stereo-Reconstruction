@@ -201,7 +201,6 @@ class StereoAcquisition(Node):
             self.get_logger().info("Error writing right image.")
 
     def remove_file_from_dir(self, folder: str):
-        folder = self.left_images_path
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:

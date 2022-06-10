@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 
 class StereoCalibration:
     def __init__(self) -> None:
-        self._calibration_data = {
+        self.__calibration_data = {
             "R": None,
             "T": None,
             "E": None,
@@ -81,28 +81,28 @@ class StereoCalibration:
             newImageSize=newImageSize,
         )
 
-        self._calibration_data["R"] = R
-        self._calibration_data["T"] = T
-        self._calibration_data["E"] = E
-        self._calibration_data["F"] = F
-        self._calibration_data["R1"] = R1
-        self._calibration_data["R2"] = R2
-        self._calibration_data["P1"] = P1
-        self._calibration_data["P2"] = P2
-        self._calibration_data["Q"] = Q
-        self._calibration_data["roi1"] = validPixROI1
-        self._calibration_data["roi2"] = validPixROI1
-        self._calibration_data["ret"] = ret
-        self._calibration_data["mtx_1"] = mtx_1
-        self._calibration_data["dist_1"] = dist_1
-        self._calibration_data["mtx_2"] = mtx_2
-        self._calibration_data["dist_2"] = dist_2
+        self.__calibration_data["R"] = R
+        self.__calibration_data["T"] = T
+        self.__calibration_data["E"] = E
+        self.__calibration_data["F"] = F
+        self.__calibration_data["R1"] = R1
+        self.__calibration_data["R2"] = R2
+        self.__calibration_data["P1"] = P1
+        self.__calibration_data["P2"] = P2
+        self.__calibration_data["Q"] = Q
+        self.__calibration_data["roi1"] = validPixROI1
+        self.__calibration_data["roi2"] = validPixROI1
+        self.__calibration_data["ret"] = ret
+        self.__calibration_data["mtx_1"] = mtx_1
+        self.__calibration_data["dist_1"] = dist_1
+        self.__calibration_data["mtx_2"] = mtx_2
+        self.__calibration_data["dist_2"] = dist_2
 
-        return self._calibration_data
+        return self.__calibration_data
     
     @property
     def calibration_data(self):
-        return self._calibration_data
+        return self.__calibration_data
 
     def save_params(self, path: str, filename: str):
 
@@ -112,7 +112,7 @@ class StereoCalibration:
         try:
             with open(path + filename, "w+") as outfile:
 
-                _calibration_data = {
+                __calibration_data = {
                     "R": [],
                     "T": [],
                     "R1": [],
@@ -122,30 +122,30 @@ class StereoCalibration:
                     "Q": [],
                 }
 
-                _calibration_data["R"] = [
-                    self._calibration_data["R"].flatten()[i] for i in range(9)
+                __calibration_data["R"] = [
+                    self.__calibration_data["R"].flatten()[i] for i in range(9)
                 ]
-                _calibration_data["T"] = [
-                    self._calibration_data["T"].flatten()[i] for i in range(3)
-                ]
-
-                _calibration_data["R1"] = [
-                    self._calibration_data["R1"].flatten()[i] for i in range(9)
-                ]
-                _calibration_data["R2"] = [
-                    self._calibration_data["R2"].flatten()[i] for i in range(9)
-                ]
-                _calibration_data["P1"] = [
-                    self._calibration_data["P1"].flatten()[i] for i in range(12)
-                ]
-                _calibration_data["P2"] = [
-                    self._calibration_data["P2"].flatten()[i] for i in range(12)
+                __calibration_data["T"] = [
+                    self.__calibration_data["T"].flatten()[i] for i in range(3)
                 ]
 
-                _calibration_data["Q"] = [
-                    self._calibration_data["Q"].flatten()[i] for i in range(16)
+                __calibration_data["R1"] = [
+                    self.__calibration_data["R1"].flatten()[i] for i in range(9)
+                ]
+                __calibration_data["R2"] = [
+                    self.__calibration_data["R2"].flatten()[i] for i in range(9)
+                ]
+                __calibration_data["P1"] = [
+                    self.__calibration_data["P1"].flatten()[i] for i in range(12)
+                ]
+                __calibration_data["P2"] = [
+                    self.__calibration_data["P2"].flatten()[i] for i in range(12)
                 ]
 
-                json.dump(_calibration_data, outfile)
+                __calibration_data["Q"] = [
+                    self.__calibration_data["Q"].flatten()[i] for i in range(16)
+                ]
+
+                json.dump(__calibration_data, outfile)
         except FileNotFoundError:
             raise FileNotFoundError(f"The {path+filename} directory does not exist")
