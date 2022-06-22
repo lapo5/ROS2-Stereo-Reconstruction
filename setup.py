@@ -16,7 +16,6 @@ setup(
         (os.path.join("share", package_name), glob("launch/*.launch.py")),
         (os.path.join("share", package_name, "params"), glob("params/*.yaml")),
         (os.path.join("share", package_name, "rviz"), glob("rviz/*.rviz")),
-        (os.path.join("share", package_name, "calibration"), glob("calibration/*")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,

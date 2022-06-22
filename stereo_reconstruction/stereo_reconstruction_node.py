@@ -22,9 +22,6 @@ from typing import List
 
 import threading
 
-
-
-
 import cv2
 
 class StereoReconstructionNode(Node):
@@ -37,15 +34,14 @@ class StereoReconstructionNode(Node):
         self.calibration_file = (
             self.get_parameter("calibration_file").get_parameter_value().string_value
         )
-        
-        self.get_logger().info(f"calibration_file: {self.calibration_file}")
 
         if self.calibration_file == "auto":
             package_share_directory = get_package_share_directory(
-                "stereo_reconstruction"
+                "stereo_calibration"
             )
             self.calibration_file = package_share_directory + "/calibration/calib_params_stereo.xml"
             
+        self.get_logger().info(f"calibration_file: {self.calibration_file}")
         
             
         self.declare_parameter("subscribers.camera_left", "/camera_left/raw_frame")
@@ -169,8 +165,8 @@ class StereoReconstructionNode(Node):
             pclmsg.fields = [point_field_x, point_field_y, point_field_z]
             pclmsg.is_bigendian = False
             pclmsg.is_dense = True
-            pclmsg.point_step = 4
-            pclmsg.row_step = 12
+            pclmsg.point_step = 12
+            pclmsg.row_step = pclmsg.width * pclmsg.point_step
             pclmsg.data = np.asarray(output_points, np.float32).tostring()
 
             self.pcl_pub.publish(pclmsg)
