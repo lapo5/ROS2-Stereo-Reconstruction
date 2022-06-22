@@ -176,7 +176,7 @@ class StereoReconstructionNode(Node):
     def nothing(self, x):
         pass
 
-    def _generate_pcl_thread_test_to_calibrate(self):
+    def __generate_pcl_thread_test_to_calibrate(self):
 
         while len(self.current_frame_left) == 0 or len(self.current_frame_right) == 0:
             self.get_logger().warn("Waiting for both frame acquisition to start...")
