@@ -11,16 +11,15 @@ class StereoReconstruction:
         cv_file = cv2.FileStorage()
         cv_file.open(file, cv2.FileStorage_READ)
 
-        self.stereoMapL_x = cv_file.getNode('stereoMapL_x').mat()
-        self.stereoMapL_y = cv_file.getNode('stereoMapL_y').mat()
-        self.stereoMapR_x = cv_file.getNode('stereoMapR_x').mat()
-        self.stereoMapR_y = cv_file.getNode('stereoMapR_y').mat()
-        
+        self.stereoMapL_x = cv_file.getNode("stereoMapL_x").mat()
+        self.stereoMapL_y = cv_file.getNode("stereoMapL_y").mat()
+        self.stereoMapR_x = cv_file.getNode("stereoMapR_x").mat()
+        self.stereoMapR_y = cv_file.getNode("stereoMapR_y").mat()
 
-        self.Q = cv_file.getNode('q').mat()
-        
+        self.Q = cv_file.getNode("q").mat()
+
         self.stereo = cv2.StereoBM_create()
-        
+
         # Setting the updated parameters before computing disparity map
         self.stereo.setNumDisparities(reconstruction_parameters["numDisparities"])
         self.stereo.setBlockSize(reconstruction_parameters["blockSize"])
@@ -33,58 +32,70 @@ class StereoReconstruction:
         self.stereo.setSpeckleWindowSize(reconstruction_parameters["speckleWindowSize"])
         self.stereo.setDisp12MaxDiff(reconstruction_parameters["disp12MaxDiff"])
         self.stereo.setMinDisparity(reconstruction_parameters["minDisparity"])
-        
-        
+
         cv_file.release()
-        
-    
+
     def disparity_from_stereovision(self, img_left, img_right):
-        
+
         img_left_gray = cv2.cvtColor(img_left, cv2.COLOR_BGR2GRAY)
         img_right_gray = cv2.cvtColor(img_right, cv2.COLOR_BGR2GRAY)
-        
+
         # Undistort and rectify images
-        img_left_nice = cv2.remap(img_left_gray, self.stereoMapL_x, self.stereoMapL_y, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
-        img_right_nice = cv2.remap(img_right_gray, self.stereoMapR_x, self.stereoMapR_y, cv2.INTER_LANCZOS4, cv2.BORDER_CONSTANT, 0)
-                        
+        img_left_nice = cv2.remap(
+            img_left_gray,
+            self.stereoMapL_x,
+            self.stereoMapL_y,
+            cv2.INTER_LANCZOS4,
+            cv2.BORDER_CONSTANT,
+            0,
+        )
+        img_right_nice = cv2.remap(
+            img_right_gray,
+            self.stereoMapR_x,
+            self.stereoMapR_y,
+            cv2.INTER_LANCZOS4,
+            cv2.BORDER_CONSTANT,
+            0,
+        )
+
         # Compute disparity map
         disparity_map = self.stereo.compute(img_left_nice, img_right_nice)
 
-        # Show disparity map before generating 3D cloud to verify that point cloud will be usable. 
+        # Show disparity map before generating 3D cloud to verify that point cloud will be usable.
         return disparity_map
-        
-        
+
     def pcl_from_disparity(self, disparity_map, img_left, img_right):
-        
-        # Get new downsampled width and height 
-        h,w = img_right.shape[:2]
+
+        # Get new downsampled width and height
+        h, w = img_right.shape[:2]
 
         # Convert disparity map to float32 and divide by 16 as show in the documentation
         disparity_map = np.float32(np.divide(disparity_map, 16.0))
 
         # Reproject points into 3D
-        points_3D = cv2.reprojectImageTo3D(disparity_map, self.Q, handleMissingValues=False)
+        points_3D = cv2.reprojectImageTo3D(
+            disparity_map, self.Q, handleMissingValues=False
+        )
         # Get color of the reprojected points
         colors = cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
 
         # Get rid of points with value 0 (no depth)
         mask_map = disparity_map > disparity_map.min()
 
-        # Mask colors and points. 
+        # Mask colors and points.
         output_points = points_3D[mask_map]
         output_colors = colors[mask_map]
-        
-        return output_points, output_colors
-    
-    
-    # Downsamples image x number (reduce_factor) of times. 
-    def _downsample_image(image, reduce_factor):
-        for i in range(0,reduce_factor):
-            #Check if image is color or grayscale
-            if len(image.shape) > 2:
-                row,col = image.shape[:2]
-            else:
-                row,col = image.shape
 
-            image = cv2.pyrDown(image, dstsize= (col//2, row // 2))
+        return output_points, output_colors
+
+    # Downsamples image x number (reduce_factor) of times.
+    def _downsample_image(image, reduce_factor):
+        for i in range(0, reduce_factor):
+            # Check if image is color or grayscale
+            if len(image.shape) > 2:
+                row, col = image.shape[:2]
+            else:
+                row, col = image.shape
+
+            image = cv2.pyrDown(image, dstsize=(col // 2, row // 2))
         return image
