@@ -37,7 +37,9 @@ class StereoReconstructionNode(Node):
         )
 
         if self.calibration_file == "auto":
-            package_share_directory = get_package_share_directory("stereo_reconstruction")
+            package_share_directory = get_package_share_directory(
+                "stereo_reconstruction"
+            )
             self.calibration_file = (
                 package_share_directory + "/calibration/calib_params_stereo.xml"
             )
@@ -91,24 +93,6 @@ class StereoReconstructionNode(Node):
             Image, self.camera_right_topic, self.callback_frame_right, 1
         )
 
-        ##################### TEST #####################
-
-        # cv_file = cv2.FileStorage()
-        # cv_file.open("/home/antonino/Desktop/work/stereo_ws/src/ROS2-Stereo-Calibration/calibration/calib_params_stereo.xml", cv2.FileStorage_READ)
-
-        # self.stereoMapL_x = cv_file.getNode('stereoMapL_x').mat()
-        # self.stereoMapL_y = cv_file.getNode('stereoMapL_y').mat()
-        # self.stereoMapR_x = cv_file.getNode('stereoMapR_x').mat()
-        # self.stereoMapR_y = cv_file.getNode('stereoMapR_y').mat()
-
-        # self.Q = cv_file.getNode('q').mat()
-
-        # self.stereo = cv2.StereoBM_create()
-
-        # cv_file.release()
-
-        ##################### TEST #####################
-
         self.generate_pcl_thread = threading.Thread(
             target=self.generate_pcl_thread, daemon=True
         )
@@ -157,29 +141,30 @@ class StereoReconstructionNode(Node):
                 disparity_map, img_left, img_right
             )
 
+            xyz = np.array(np.hstack([output_points, output_colors]), dtype=np.float32)
+            N = len(output_points)
+
             pclmsg = PointCloud2()
 
             pclmsg.header.stamp = self.get_clock().now().to_msg()
             pclmsg.header.frame_id = "pointcloud"
-            pclmsg.width = output_points.shape[1]
-            pclmsg.height = output_points.shape[0]
+            pclmsg.height = 1
+            pclmsg.width = N
 
-            point_field_x = PointField(
-                name="x", count=1, datatype=PointField.FLOAT32, offset=0
-            )
-            point_field_y = PointField(
-                name="y", count=1, datatype=PointField.FLOAT32, offset=4
-            )
-            point_field_z = PointField(
-                name="z", count=1, datatype=PointField.FLOAT32, offset=8
-            )
-
-            pclmsg.fields = [point_field_x, point_field_y, point_field_z]
+            pclmsg.fields = [
+                PointField(name="x", count=1, datatype=PointField.FLOAT32, offset=0),
+                PointField(name="y", count=1, datatype=PointField.FLOAT32, offset=4),
+                PointField(name="z", count=1, datatype=PointField.FLOAT32, offset=8),
+                PointField(name="r", count=1, datatype=PointField.FLOAT32, offset=12),
+                PointField(name="g", count=1, datatype=PointField.FLOAT32, offset=16),
+                PointField(name="b", count=1, datatype=PointField.FLOAT32, offset=20),
+            ]
             pclmsg.is_bigendian = False
             pclmsg.is_dense = True
-            pclmsg.point_step = 4
-            pclmsg.row_step = pclmsg.width * pclmsg.point_step
-            pclmsg.data = np.asarray(output_points, np.float32).tostring()
+            pclmsg.point_step = 24
+
+            pclmsg.row_step = N * pclmsg.point_step
+            pclmsg.data = xyz.tostring()
 
             self.pcl_pub.publish(pclmsg)
 
