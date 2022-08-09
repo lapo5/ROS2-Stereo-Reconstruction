@@ -134,6 +134,8 @@ class StereoReconstructionNode(Node):
             disparity_map = self.stereo_reconstruction.disparity_from_stereovision(
                 img_left, img_right
             )
+
+
             (
                 output_points,
                 output_colors,
@@ -172,6 +174,7 @@ class StereoReconstructionNode(Node):
             disparity.header = pclmsg.header
 
             self.disparity_pub.publish(disparity)
+
 
     def nothing(self, x):
         pass

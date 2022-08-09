@@ -70,11 +70,11 @@ class StereoReconstruction:
         h, w = img_right.shape[:2]
 
         # Convert disparity map to float32 and divide by 16 as show in the documentation
-        disparity_map = np.float32(np.divide(disparity_map, 16.0))
+        disparity_map = np.float32(disparity_map / 16.0)
 
         # Reproject points into 3D
         points_3D = cv2.reprojectImageTo3D(
-            disparity_map, self.Q, handleMissingValues=False
+            disparity_map, self.Q, handleMissingValues=True
         )
         # Get color of the reprojected points
         colors = cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
@@ -85,5 +85,7 @@ class StereoReconstruction:
         # Mask colors and points.
         output_points = points_3D[mask_map]
         output_colors = colors[mask_map]
+
+        output_points = output_points
 
         return output_points, output_colors
